@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="mn" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кино Үнэлгээ - Шилдэг Киноны Сан</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans (Cyrillic support) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#152033',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for sleek dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        /* Hide scrollbar for horizontal category pills on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Glassmorphism card effect */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-header {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Toast Notification Container (Replaces alert) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Sticky Header & Navigation -->
+    <header class="glass-header sticky top-0 z-40 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-4">
+                
+                <!-- Brand Logo -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                            <!-- Film Reel SVG Icon -->
+                            <svg class="w-6 h-6 text-slate-950" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent">
+                                Кино Үнэлгээ
+                            </h1>
+                            <p class="text-xs text-slate-400 hidden sm:block">Монголын кино сонирхогчдын нэгдсэн сан</p>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Add Movie Button -->
+                    <button onclick="openAddMovieModal()" class="md:hidden inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/20 active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>Нэмэх</span>
+                    </button>
+                </div>
+
+                <!-- Search Bar & Desktop Actions -->
+                <div class="flex items-center gap-3 flex-1 md:max-w-xl justify-end">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            placeholder="Киноны нэр, найруулагчаар хайх..." 
+                            class="w-full pl-10 pr-9 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 focus:border-amber-500 transition"
+                        >
+                        <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Desktop Add Movie Button -->
+                    <button onclick="openAddMovieModal()" class="hidden md:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/20 whitespace-nowrap active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>+ Кино нэмэх</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Genre Tabs & Controls Bar -->
+            <div class="pb-3 pt-1 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-t border-slate-800/80">
+                <!-- Genre Filter Tabs -->
+                <div id="genre-tabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+
+                <!-- Right Controls: My Rated Toggle & Sort Dropdown -->
+                <div class="flex items-center justify-between sm:justify-end gap-2.5 shrink-0">
+                    <!-- My Rated Movies Toggle -->
+                    <button 
+                        id="my-rated-toggle" 
+                        onclick="toggleMyRated()" 
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-700 bg-slate-800/70 text-slate-300 hover:bg-slate-700/70 transition select-none"
+                    >
+                        <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span>Миний үнэлсэн</span>
+                        <span id="my-rated-count" class="px-1.5 py-0.5 text-xs rounded-md bg-slate-700 text-amber-300 font-bold">0</span>
+                    </button>
+
+                    <!-- Sort Select -->
+                    <div class="relative">
+                        <select 
+                            id="sort-select" 
+                            onchange="handleSortChange(this.value)" 
+                            aria-label="Эрэмбэлэх"
+                            class="appearance-none pl-3.5 pr-9 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800/90 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/60 cursor-pointer"
+                        >
+                            <option value="rating">Өндөр үнэлгээтэй</option>
+                            <option value="newest">Шинэ</option>
+                            <option value="name">Нэрээр (А-Я)</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        
+        <!-- Stats & Active Filter Summary -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <p id="results-summary" class="text-sm text-slate-300 font-medium">Нийт 24 кино харагдаж байна</p>
+            </div>
+            <p class="text-xs text-slate-400">Карт дээрх одон дээр дарж шууд үнэлгээ өгөх эсвэл кинон дээр дарж дэлгэрэнгүй үзнэ үү.</p>
+        </div>
+
+        <!-- Movies Grid -->
+        <div id="movies-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Movie Cards injected via JS -->
+        </div>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center">
+            <div class="w-20 h-20 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-4 text-slate-500">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Кино олдсонгүй</h3>
+            <p id="empty-state-desc" class="text-sm text-slate-400 max-w-md mb-5">Таны хайлт болон шүүлтүүрт тохирох кино одоогоор алга байна.</p>
+            <button onclick="resetFilters()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition">
+                Шүүлтүүр цэвэрлэх
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/60 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-200">Кино Үнэлгээ</span>
+                <span>•</span>
+                <span>24+ Шилдэг киноны сан</span>
+            </div>
+            <p>Таны өгсөн үнэлгээ болон сэтгэгдэл хөтөч дээр автоматаар хадгалагдана.</p>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MOVIE DETAIL & REVIEW MODAL                                           -->
+    <!-- ===================================================================== -->
+    <div id="movie-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+        <div class="relative w-full max-w-3xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+            
+            <!-- Close Modal Button -->
+            <button onclick="closeMovieModal()" aria-label="Хаах" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center justify-center transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <!-- Scrollable Modal Body -->
+            <div class="overflow-y-auto flex-1">
+                <!-- Top Hero Section inside Modal -->
+                <div class="flex flex-col md:flex-row bg-slate-850 border-b border-slate-800">
+                    <!-- Stylized Poster Artwork -->
+                    <div id="modal-poster" class="w-full md:w-64 h-56 md:h-auto shrink-0 relative overflow-hidden">
+                        <!-- SVG Poster injected via JS -->
+                    </div>
+
+                    <!-- Movie Info & Interactive Rating Box -->
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span id="modal-genre" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">Төрөл</span>
+                                <span id="modal-year" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">2024</span>
+                                <span id="modal-country" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800/70 text-slate-400">Улс</span>
+                            </div>
+
+                            <h2 id="modal-title" class="text-2xl sm:text-3xl font-extrabold text-white mb-1 leading-tight">Киноны нэр</h2>
+                            <p class="text-sm text-slate-400 mb-4">Найруулагч: <span id="modal-director" class="text-slate-200 font-semibold">Нэр</span></p>
+
+                            <p id="modal-synopsis" class="text-sm text-slate-300 leading-relaxed mb-5">
+                                Киноны товч агуулга энд харагдана.
+                            </p>
+                        </div>
+
+                        <!-- Current Score & User Star Picker -->
+                        <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <div class="text-xs text-slate-400 mb-0.5">Дундаж үнэлгээ</div>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="modal-avg-rating" class="text-2xl font-extrabold text-amber-400">4.8</span>
+                                    <span class="text-xs text-slate-400">/ 5.0 (<span id="modal-vote-count">120</span> санал)</span>
+                                </div>
+                            </div>
+
+                            <div class="border-t sm:border-t-0 sm:border-l border-slate-800 pt-3 sm:pt-0 sm:pl-4">
+                                <div class="text-xs text-slate-400 mb-1 flex items-center justify-between gap-2">
+                                    <span>Таны үнэлгээ:</span>
+                                    <span id="modal-user-rating-label" class="text-amber-400 font-bold">Өгөөгүй</span>
+                                </div>
+                                <div id="modal-star-picker" class="flex items-center gap-1">
+                                    <!-- 5 interactive stars injected via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review Form & Comments List -->
+                <div class="p-6 space-y-6">
+                    <!-- Write a Review Form -->
+                    <form id="review-form" onsubmit="submitReview(event)" class="bg-slate-800/40 border border-slate-800 rounded-xl p-4 space-y-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span>Үнэлгээ ба сэтгэгдэл үлдээх</span>
+                        </h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="reviewer-name" class="block text-xs text-slate-400 mb-1">Таны нэр (заавал биш)</label>
+                                <input type="text" id="reviewer-name" placeholder="Зочин үзэгч" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Од сонгох (1-5)</label>
+                                <div id="form-star-selector" class="flex items-center gap-1.5 h-[38px]">
+                                    <!-- Synced stars for review submission -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="review-comment" class="block text-xs text-slate-400 mb-1">Сэтгэгдэл</label>
+                            <textarea id="review-comment" rows="2" required placeholder="Энэ киноны талаарх сэтгэгдлээ монголоор бичнэ үү..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"></textarea>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-md shadow-amber-500/10">
+                                Сэтгэгдэл нийтлэх
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Reviews List -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center justify-between">
+                            <span>Үзэгчдийн сэтгэгдэл</span>
+                            <span id="modal-reviews-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+                        </h3>
+                        <div id="modal-reviews-list" class="space-y-3">
+                            <!-- Reviews injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- ADD NEW MOVIE MODAL                                                   -->
+    <!-- ===================================================================== -->
+    <div id="add-movie-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+        <div class="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl p-6 my-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">+</span>
+                    <span>Шинэ кино нэмэх</span>
+                </h2>
+                <button onclick="closeAddMovieModal()" aria-label="Хаах" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="add-movie-form" onsubmit="handleAddMovie(event)" class="space-y-4">
+                <div>
+                    <label for="new-title" class="block text-xs font-semibold text-slate-300 mb-1">Киноны нэр *</label>
+                    <input type="text" id="new-title" required placeholder="Жишээ: Интерстеллар" class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="new-director" class="block text-xs font-semibold text-slate-300 mb-1">Найруулагч *</label>
+                        <input type="text" id="new-director" required placeholder="Кристофер Нолан" class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label for="new-year" class="block text-xs font-semibold text-slate-300 mb-1">Нээлт хийсэн он *</label>
+                        <input type="number" id="new-year" required min="1920" max="2030" value="2024" class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="new-genre" class="block text-xs font-semibold text-slate-300 mb-1">Төрөл жанр *</label>
+                        <select id="new-genre" required class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                            <option value="Адал явдалт">Адал явдалт</option>
+                            <option value="Зөгнөлт">Зөгнөлт</option>
+                            <option value="Драм">Драм</option>
+                            <option value="Анимэйшн">Анимэйшн</option>
+                            <option value="Гэмт хэрэг">Гэмт хэрэг</option>
+                            <option value="Инээдэм">Инээдэм</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="new-rating" class="block text-xs font-semibold text-slate-300 mb-1">Таны анхны үнэлгээ (1-5)</label>
+                        <select id="new-rating" class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                            <option value="5">★★★★★ (5.0 - Гайхалтай)</option>
+                            <option value="4">★★★★☆ (4.0 - Сайн)</option>
+                            <option value="3">★★★☆☆ (3.0 - Дундаж)</option>
+                            <option value="2">★★☆☆☆ (2.0 - Тааруу)</option>
+                            <option value="1">★☆☆☆☆ (1.0 - Муу)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="new-synopsis" class="block text-xs font-semibold text-slate-300 mb-1">Товч агуулга *</label>
+                    <textarea id="new-synopsis" rows="3" required placeholder="Киноны үйл явдлын талаар товч тайлбар бичнэ үү..." class="w-full px-3.5 py-2.5 bg-slate-850 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeAddMovieModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm transition">
+                        Болих
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-amber-500/20">
+                        Санд нэмэх
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * КИНО ҮНЭЛГЭЭ (MOVIE RATING WEB APP)
+         * Бүх өгөгдөл, хайлт, шүүлтүүр, үнэлгээ болон SVG постер зургийг удирдах логик.
+         */
+
+        const GENRES = [
+            "Бүгд",
+            "Адал явдалт",
+            "Зөгнөлт",
+            "Драм",
+            "Анимэйшн",
+            "Гэмт хэрэг",
+            "Инээдэм"
+        ];
+
+        // 24 Diverse, Popular, Age-Appropriate Movies in Mongolian
+        const INITIAL_MOVIES = [
+            {
+                id: 1,
+                title: "Аравт",
+                director: "Д.Золбаяр, У.Шагдарсүрэн",
+                year: 2012,
+                genre: "Адал явдалт",
+                country: "Монгол",
+                ratingSum: 1584,
+                voteCount: 340,
+                palette: ["#b45309", "#1e293b", "#f59e0b"],
+                motif: "sword",
+                synopsis: "XIII зууны Монголын эзэнт гүрний үед эзэн хааны чухал даалгаврыг биелүүлэхээр хөдөлсөн арван баатар эрийн эр зориг, нөхөрлөл, үнэнч сэтгэлийн тухай түүхэн тулаант кино.",
+                reviews: [
+                    { author: "Бат-Эрдэнэ", rating: 5, text: "Монголын түүхэн киноны оргил бүтээлүүдийн нэг. Зураг авалт, хөгжим үнэхээр гайхалтай.", date: "2 өдрийн өмнө" },
+                    { author: "Сарантуяа", rating: 5, text: "Хэд ч үзсэн уйдахааргүй, бахархал төрүүлэм сайхан кино.", date: "1 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Тунгалаг Тамир",
+                director: "Р.Доржпалам",
+                year: 1970,
+                genre: "Драм",
+                country: "Монгол",
+                ratingSum: 2450,
+                voteCount: 500,
+                palette: ["#0369a1", "#0f172a", "#38bdf8"],
+                motif: "wave",
+                synopsis: "Ч.Лодойдамбын алдарт романаас сэдэвлэн бүтээсэн, XX зууны эхэн үеийн Монголын нийгмийн шилжилт, Эрдэнэ, Долгор, Итгэлт баян нарын хувь тавиланг харуулсан алтан үеийн сонгодог бүтээл.",
+                reviews: [
+                    { author: "Тэмүүлэн", rating: 5, text: "Монгол киноны мөнхийн сонгодог бүтээл. Дүр бүхэн нь амьд.", date: "3 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Интерстеллар (Interstellar)",
+                director: "Кристофер Нолан",
+                year: 2014,
+                genre: "Зөгнөлт",
+                country: "АНУ",
+                ratingSum: 4230,
+                voteCount: 880,
+                palette: ["#1d4ed8", "#090d16", "#60a5fa"],
+                motif: "planet",
+                synopsis: "Дэлхий дээрх амьдрал мөхлийн ирмэгт тулсан ирээдүйд хүн төрөлхтөнд шинэ гэр орон олохоор өтний нүхээр дамжин сансрын уудам руу аялж буй сансрын нисгэгчдийн тухай.",
+                reviews: [
+                    { author: "Анужин", rating: 5, text: "Ханс Циммерийн хөгжим болон шинжлэх ухааны зөгнөлт санаа нь зүрх сэтгэлд хоногшдог.", date: "Өчигдөр" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Сүнсэнд туугдагсад (Spirited Away)",
+                director: "Хаяо Миязаки",
+                year: 2001,
+                genre: "Анимэйшн",
+                country: "Япон",
+                ratingSum: 3680,
+                voteCount: 750,
+                palette: ["#be123c", "#1e1b4b", "#fda4af"],
+                motif: "lantern",
+                synopsis: "10 настай Чихиро охин эцэг эхийн хамт шинэ хот руу нүүж явахдаа ид шидэт сүнснүүдийн ертөнцөд төөрч, эцэг эхээ аврахын тулд халуун усны газарт ажиллах болно.",
+                reviews: [
+                    { author: "Номин", rating: 5, text: "Хүүхэд насны минь хамгийн нандин дурсамж. Урлагийн жинхэнэ бүтээл.", date: "4 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Зүүдний хулгайч (Inception)",
+                director: "Кристофер Нолан",
+                year: 2010,
+                genre: "Зөгнөлт",
+                country: "АНУ",
+                ratingSum: 3920,
+                voteCount: 820,
+                palette: ["#0f766e", "#0f172a", "#2dd4bf"],
+                motif: "prism",
+                synopsis: "Хүмүүсийн зүүдэнд нэвтэрч далд ухамсраас нь нууц мэдээлэл хулгайлдаг мэргэжилтэн Дом Кобб энэ удаад эсрэгээрээ хүний оюун санаанд шинэ санаа суулгах даалгавар авна.",
+                reviews: [
+                    { author: "Ганзориг", rating: 5, text: "Төгсгөлийн тэр эргэлддэг ээрүүл одоо ч бодогддог шүү.", date: "5 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 6,
+                title: "Шоушенкийн шоронгоос оргосон нь",
+                director: "Фрэнк Дарабонт",
+                year: 1994,
+                genre: "Драм",
+                country: "АНУ",
+                ratingSum: 4650,
+                voteCount: 940,
+                palette: ["#4338ca", "#0f172a", "#a5b4fc"],
+                motif: "sunburst",
+                synopsis: "Хийгээгүй хэргийнхээ төлөө бүх насаараа хоригдох ял авсан банкир Энди Дюфрейн шоронгийн хатуу ширүүн нөхцөлд итгэл найдвараа алдалгүй эрх чөлөөний төлөө тэмцэнэ.",
+                reviews: [
+                    { author: "Мөнхбат", rating: 5, text: "Итгэл найдвар гэдэг хамгийн хүчтэй зүйл гэдгийг ойлгуулсан кино.", date: "1 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 7,
+                title: "Харанхуйн хөлөг баатар (The Dark Knight)",
+                director: "Кристофер Нолан",
+                year: 2008,
+                genre: "Гэмт хэрэг",
+                country: "АНУ",
+                ratingSum: 4410,
+                voteCount: 900,
+                palette: ["#334155", "#090d16", "#facc15"],
+                motif: "shield",
+                synopsis: "Готам хотыг эмх замбараагүй байдалд оруулахыг санаархаж буй Жокерын эсрэг Бэтмен шударга ёс болон ёс суртахууны хүнд сорилттой тулгарна.",
+                reviews: [
+                    { author: "Энхжин", rating: 5, text: "Хит Леджерийн Жокерын дүр кино урлагийн түүхэнд үүрд үлдэнэ.", date: "6 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 8,
+                title: "Чиний нэр (Your Name)",
+                director: "Макото Шинкай",
+                year: 2016,
+                genre: "Анимэйшн",
+                country: "Япон",
+                ratingSum: 3120,
+                voteCount: 650,
+                palette: ["#6d28d9", "#1e1b4b", "#f472b6"],
+                motif: "comet",
+                synopsis: "Токио хотын хүү Таки болон хөдөө тосгоны охин Мицүха нар зүүдэндээ бие биенийхээ биед орж сэрдэг болсноор орон зай, цаг хугацааг давсан холбоо үүснэ.",
+                reviews: [
+                    { author: "Хүслэн", rating: 5, text: "Зураглал бүр нь ханын зураг шиг үзэсгэлэнтэй, хөгжим нь сэтгэл хөдөлгөм.", date: "3 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 9,
+                title: "Бөгжний эзэн: Хаан эргэн ирсэн нь",
+                director: "Питер Жексон",
+                year: 2003,
+                genre: "Адал явдалт",
+                country: "Шинэ Зеланд",
+                ratingSum: 4180,
+                voteCount: 850,
+                palette: ["#a16207", "#1c1917", "#fde047"],
+                motif: "ring",
+                synopsis: "Фродо, Сэм хоёр Нэг бөгжийг устгахаар Мөхлийн уул руу ойртох үед Арагорн Дундад дэлхийн чөлөөт ард түмнийг удирдан Сауроны армитай сүүлчийн тулаанаа хийнэ.",
+                reviews: [
+                    { author: "Төгөлдөр", rating: 5, text: "Хамгийн шилдэг уран зөгнөлт адал явдалт гурамсан кино!", date: "2 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 10,
+                title: "Шимэгч (Parasite)",
+                director: "Бон Жун-хо",
+                year: 2019,
+                genre: "Гэмт хэрэг",
+                country: "Өмнөд Солонгос",
+                ratingSum: 3490,
+                voteCount: 740,
+                palette: ["#15803d", "#0f172a", "#86efac"],
+                motif: "stairs",
+                synopsis: "Ажилгүй ядуу Ким гэр бүлийнхэн чинээлэг Парк гэр бүлийн гэрт нэг нэгээрээ багш, жолооч, гэрийн үйлчлэгчээр ажилд орсноор санаанд оромгүй үйл явдлууд өрнөнө.",
+                reviews: [
+                    { author: "Дэлгэрмаа", rating: 5, text: "Нийгмийн ялгааг маш ухаалаг бөгөөд гэнэтийн эргэлттэй харуулсан.", date: "4 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 11,
+                title: "Дюна: Хоёрдугаар анги (Dune: Part Two)",
+                director: "Дени Вильнёв",
+                year: 2024,
+                genre: "Зөгнөлт",
+                country: "АНУ",
+                ratingSum: 3350,
+                voteCount: 700,
+                palette: ["#c2410c", "#1c1917", "#fdba74"],
+                motif: "dune",
+                synopsis: "Пол Атрейдес Арракис гарагийн уугуул Фременчүүдтэй нэгдэж, гэр бүлийг нь сүйрүүлсэн Харконнен угсааны эсрэг өшөө авахаар босно.",
+                reviews: [
+                    { author: "Билгүүн", rating: 5, text: "Дуу чимээ, дүрслэл нь театрт үзэхэд үнэхээр сүрдмээр байсан.", date: "Өчигдөр" }
+                ]
+            },
+            {
+                id: 12,
+                title: "Амьдрал сайхан (Life Is Beautiful)",
+                director: "Роберто Бениньи",
+                year: 1997,
+                genre: "Инээдэм",
+                country: "Итали",
+                ratingSum: 3250,
+                voteCount: 660,
+                palette: ["#b91c1c", "#1e293b", "#fca5a5"],
+                motif: "heart",
+                synopsis: "Дэлхийн II дайны үед хорих лагерьт хоригдсон хошин шогийн мэдрэмжтэй аав бяцхан хүүгээ айдас түгшүүрээс хамгаалахын тулд бүхнийг тоглоом мэтээр ойлгуулна.",
+                reviews: [
+                    { author: "Оюунчимэг", rating: 5, text: "Инээлгэж байгаад уйлуулдаг гайхамшигтай кино.", date: "1 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 13,
+                title: "Форрест Гамп (Forrest Gump)",
+                director: "Роберт Земекис",
+                year: 1994,
+                genre: "Драм",
+                country: "АНУ",
+                ratingSum: 3890,
+                voteCount: 810,
+                palette: ["#0284c7", "#0f172a", "#bae6fd"],
+                motif: "feather",
+                synopsis: "Цайлган сэтгэлтэй Форрест Гамп санамсаргүй байдлаар Америкийн түүхийн хамгийн чухал үйл явдлуудын гэрч болж, багын хайр Женнигээ үргэлж сэтгэлдээ тээн амьдарна.",
+                reviews: [
+                    { author: "Эрдэнэцогт", rating: 5, text: "Амьдрал бол шоколадтай хайрцаг шиг... Гайхалтай түүх.", date: "5 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 14,
+                title: "Хүн-Аалз: Аалзны ертөнцөөр (Across the Spider-Verse)",
+                director: "Хоаким Дос Сантос",
+                year: 2023,
+                genre: "Анимэйшн",
+                country: "АНУ",
+                ratingSum: 2980,
+                voteCount: 620,
+                palette: ["#e11d48", "#1e1b4b", "#38bdf8"],
+                motif: "web",
+                synopsis: "Майлз Моралес олон ертөнцийн Хүн-Аалзнуудын багтай уулзах боловч хайртай хүмүүсээ аврах арга замын талаар тэдэнтэй санал зөрөлдөнө.",
+                reviews: [
+                    { author: "Тэмүжин", rating: 5, text: "Анимэйшн урлагийн шинэ түвшин! Кадр бүр нь уран зураг.", date: "2 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 15,
+                title: "Матрикс (The Matrix)",
+                director: "Вачовски эгч дүүс",
+                year: 1999,
+                genre: "Зөгнөлт",
+                country: "АНУ",
+                ratingSum: 3560,
+                voteCount: 750,
+                palette: ["#047857", "#022c22", "#34d399"],
+                motif: "code",
+                synopsis: "Компьютерийн хакер Нео өөрийн амьдарч буй ертөнц бол машинуудын бүтээсэн хиймэл хуурмаг зүйл болохыг олж мэдэн хүн төрөлхтнийг чөлөөлөх тэмцэлд нэгдэнэ.",
+                reviews: [
+                    { author: "Сүхбат", rating: 5, text: "Улаан эсвэл цэнхэр эм? Зөгнөлт киноны хувьсгал хийсэн бүтээл.", date: "1 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 16,
+                title: "Гладиатор (Gladiator)",
+                director: "Ридли Скотт",
+                year: 2000,
+                genre: "Адал явдалт",
+                country: "АНУ",
+                ratingSum: 3420,
+                voteCount: 720,
+                palette: ["#9a3412", "#1c1917", "#fbbf24"],
+                motif: "sword",
+                synopsis: "Урвалтаас болж гэр бүлээ алдаж боол болсон Ромын алдарт жанжин Максимус Колизейн талбайд гладиатор болон тулалдаж эзэн хаанаас өшөөгөө авахаар тэмцэнэ.",
+                reviews: [
+                    { author: "Алтанхуяг", rating: 5, text: "Жинхэнэ эр хүний тэвчээр, нэр төрийг харуулсан туульс.", date: "3 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 17,
+                title: "Коко (Coco)",
+                director: "Ли Анкрич",
+                year: 2017,
+                genre: "Анимэйшн",
+                country: "АНУ",
+                ratingSum: 3180,
+                voteCount: 660,
+                palette: ["#d97706", "#31102f", "#fb923c"],
+                motif: "guitar",
+                synopsis: "Гэр бүлийнхэн нь хөгжмийг хориглосон ч хөгжимчин болохыг мөрөөддөг Мигель хүү санамсаргүйгээр Үхэгсдийн оронд очсоноор өвөг дээдсийнхээ нууцыг нээнэ.",
+                reviews: [
+                    { author: "Мишээл", rating: 5, text: "Гэр бүл, өвөг дээдсээ дурсан санахын үнэ цэнийг мэдрүүлсэн.", date: "4 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 18,
+                title: "Труманы шоу (The Truman Show)",
+                director: "Питер Вейр",
+                year: 1998,
+                genre: "Инээдэм",
+                country: "АНУ",
+                ratingSum: 2890,
+                voteCount: 620,
+                palette: ["#0284c7", "#1e293b", "#7dd3fc"],
+                motif: "eye",
+                synopsis: "Труман Бёрбанк төрсөн цагаасаа хойш өөрийнх нь амьдрал бүхэлдээ 24 цагийн турш дэлхий даяар шууд дамжуулагддаг телевизийн шоу гэдгийг огт мэдэлгүй амьдарчээ.",
+                reviews: [
+                    { author: "Наранбаатар", rating: 5, text: "Жим Керригийн хамгийн гайхалтай, гүн гүнзгий дүрүүдийн нэг.", date: "6 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 19,
+                title: "Оппенхаймер (Oppenheimer)",
+                director: "Кристофер Нолан",
+                year: 2023,
+                genre: "Драм",
+                country: "АНУ",
+                ratingSum: 3150,
+                voteCount: 680,
+                palette: ["#ea580c", "#0f172a", "#fde047"],
+                motif: "atom",
+                synopsis: "Атомын бөмбөгийг бүтээх Манхэттэн төслийг удирдсан физикч Ж.Роберт Оппенхаймерын шинжлэх ухааны нээлт болон түүний дараах ёс суртахууны зөрчлийн түүх.",
+                reviews: [
+                    { author: "Чингүүн", rating: 5, text: "Түүхэн намтарчилсан киног ийм сонирхолтой, сэтгэл түгшээм хийж болдог юм байна.", date: "2 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 20,
+                title: "Загалмайлсан эцэг (The Godfather)",
+                director: "Фрэнсис Форд Коппола",
+                year: 1972,
+                genre: "Гэмт хэрэг",
+                country: "АНУ",
+                ratingSum: 4320,
+                voteCount: 880,
+                palette: ["#7f1d1d", "#090d16", "#fca5a5"],
+                motif: "crown",
+                synopsis: "Нью-Йоркийн нөлөө бүхий мафийн гэр бүлийн тэргүүн Вито Корлеоне гэр бүлийнхээ эрх мэдлийг дурамжхан байсан бага хүү Майклдаа шилжүүлэх түүх.",
+                reviews: [
+                    { author: "Батболд", rating: 5, text: "Кино урлагийн сурах бичиг болсон бүтээл.", date: "1 долоо хоногийн өмнө" }
+                ]
+            },
+            {
+                id: 21,
+                title: "Гранд Будапешт зочид буудал",
+                director: "Уэс Андерсон",
+                year: 2014,
+                genre: "Инээдэм",
+                country: "Герман / АНУ",
+                ratingSum: 2640,
+                voteCount: 580,
+                palette: ["#be185d", "#31102f", "#f9a8d4"],
+                motif: "key",
+                synopsis: "Европын алдарт зочид буудлын домогт зохион байгуулагч Густав болон түүний үнэнч туслах Зеро нарын алдагдсан үнэт уран зургийн төлөөх хөгжилтэй адал явдал.",
+                reviews: [
+                    { author: "Солонго", rating: 4, text: "Өнгөний зохицол, тэгш хэмтэй зураг авалт нь нүд баясгана.", date: "5 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 22,
+                title: "Харь гарагийнхан (Avatar)",
+                director: "Жеймс Камерон",
+                year: 2009,
+                genre: "Адал явдалт",
+                country: "АНУ",
+                ratingSum: 3290,
+                voteCount: 720,
+                palette: ["#0e7490", "#082f49", "#22d3ee"],
+                motif: "leaf",
+                synopsis: "Пандора хэмээх үзэсгэлэнт саран дээр илгээгдсэн цэрэг Жейк Салли нутгийн На'ви омгийн соёл, байгальтай танилцсанаар тэднийг хамгаалахаар шийднэ.",
+                reviews: [
+                    { author: "Гантулга", rating: 5, text: "Пандорагийн шөнийн ой мод одоо ч хамгийн үзэсгэлэнтэй ертөнц.", date: "3 өдрийн өмнө" }
+                ]
+            },
+            {
+                id: 23,
+                title: "Бидний мэдэх хүүхдүүд (3 Idiots)",
+                director: "Ражкумар Хирани",
+                year: 2009,
+                genre: "Инээдэм",
+                country: "Энэтхэг",
+                ratingSum: 3510,
+                voteCount: 730,
+                palette: ["#d97706", "#1e293b", "#fde047"],
+                motif: "bulb",
+                synopsis: "Инженерийн их сургуулийн гурван найзын нөхөрлөл, боловсролын тогтолцооны дарамт болон өөрийн дуртай зүйлээ хөөхийн чухлыг харуулсан хөгжилтэй, сургамжтай кино.",
+                reviews: [
+                    { author: "Золзаяа", rating: 5, text: "Оюутан залууст заавал үзүүлэх хэрэгтэй гайхалтай кино. All is well!", date: "Өчигдөр" }
+                ]
+            },
+            {
+                id: 24,
+                title: "Баригдвал барь (Catch Me If You Can)",
+                director: "Стивен Спилберг",
+                year: 2002,
+                genre: "Гэмт хэрэг",
+                country: "АНУ",
+                ratingSum: 2940,
+                voteCount: 640,
+                palette: ["#2563eb", "#0f172a", "#93c5fd"],
+                motif: "plane",
+                synopsis: "19 нас хүрэхээсээ өмнө нисгэгч, эмч, прокурорын дүрд хувирч сая сая долларын залилан хийсэн залуу Фрэнк Абигнейл болон түүнийг мөрдөх Холбооны мөрдөгчийн түүх.",
+                reviews: [
+                    { author: "Түвшин", rating: 5, text: "Бодит явдлаас сэдэвлэсэн гэхэд итгэмээргүй сонирхолтой!", date: "4 өдрийн өмнө" }
+                ]
+            }
+        ];
+
+        // Application State
+        let movies = [];
+        let userRatings = {}; // { movieId: rating (1-5) }
+        let selectedGenre = "Бүгд";
+        let searchQuery = "";
+        let sortBy = "rating"; // 'rating' | 'newest' | 'name'
+        let showOnlyMyRated = false;
+        let activeModalMovieId = null;
+        let pendingFormRating = 5;
+
+        // Storage Keys
+        const STORAGE_MOVIES_KEY = "kino_unelgee_movies_v1";
+        const STORAGE_USER_RATINGS_KEY = "kino_unelgee_user_ratings_v1";
+
+        /**
+         * Initialize App State from LocalStorage or Defaults
+         */
+        function initApp() {
+            try {
+                const savedMovies = localStorage.getItem(STORAGE_MOVIES_KEY);
+                const savedRatings = localStorage.getItem(STORAGE_USER_RATINGS_KEY);
+
+                if (savedMovies) {
+                    const parsed = JSON.parse(savedMovies);
+                    movies = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...INITIAL_MOVIES];
+                } else {
+                    movies = [...INITIAL_MOVIES];
+                }
+
+                if (savedRatings) {
+                    userRatings = JSON.parse(savedRatings) || {};
+                }
+            } catch (e) {
+                console.error("Storage load error:", e);
+                movies = [...INITIAL_MOVIES];
+                userRatings = {};
+            }
+
+            renderGenreTabs();
+            updateMyRatedBadge();
+            renderMovies();
+
+            // Search input listener
+            const searchInput = document.getElementById("search-input");
+            searchInput.addEventListener("input", (e) => {
+                searchQuery = e.target.value.trim();
+                document.getElementById("clear-search-btn").classList.toggle("hidden", searchQuery.length === 0);
+                renderMovies();
+            });
+
+            // Close modals when clicking backdrop or pressing Escape
+            document.getElementById("movie-modal").addEventListener("click", closeMovieModal);
+            document.getElementById("add-movie-modal").addEventListener("click", closeAddMovieModal);
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeMovieModal();
+                    closeAddMovieModal();
+                }
+            });
+        }
+
+        /**
+         * Persist state to localStorage safely
+         */
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_MOVIES_KEY, JSON.stringify(movies));
+                localStorage.setItem(STORAGE_USER_RATINGS_KEY, JSON.stringify(userRatings));
+            } catch (e) {
+                console.warn("Could not save to localStorage:", e);
+            }
+        }
+
+        /**
+         * Calculate formatted average rating for a movie
+         */
+        function getAverageRating(movie) {
+            if (!movie.voteCount || movie.voteCount === 0) return 0;
+            return movie.ratingSum / movie.voteCount;
+        }
+
+        /**
+         * Generate Stylized Custom SVG Poster Artwork (Zero external images, never breaks)
+         */
+        function generatePosterSVG(movie, isLarge = false) {
+            const [c1, c2, accent] = movie.palette || ["#d97706", "#0f172a", "#fbbf24"];
+            const uid = `grad-${movie.id}-${isLarge ? 'lg' : 'sm'}`;
+            
+            // Geometric motif shapes based on movie theme
+            let motifSVG = "";
+            switch (movie.motif) {
+                case "planet":
+                    motifSVG = `
+                        <circle cx="150" cy="110" r="46" fill="${accent}" fill-opacity="0.25" stroke="${accent}" stroke-width="2"/>
+                        <ellipse cx="150" cy="110" rx="85" ry="20" transform="rotate(-18 150 110)" fill="none" stroke="${accent}" stroke-width="2.5"/>
+                        <circle cx="220" cy="55" r="4" fill="#fff" fill-opacity="0.7"/>
+                        <circle cx="70" cy="65" r="3" fill="#fff" fill-opacity="0.5"/>
+                    `;
+                    break;
+                case "sword":
+                    motifSVG = `
+                        <path d="M150 38 L158 145 L150 165 L142 145 Z" fill="${accent}" fill-opacity="0.85"/>
+                        <rect x="122" y="142" width="56" height="7" rx="3.5" fill="#fff" fill-opacity="0.9"/>
+                        <rect x="146" y="149" width="8" height="26" rx="2" fill="${accent}"/>
+                        <circle cx="150" cy="110" r="62" fill="none" stroke="${accent}" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="6 6"/>
+                    `;
+                    break;
+                case "wave":
+                    motifSVG = `
+                        <path d="M20 120 Q 85 75, 150 120 T 280 120" fill="none" stroke="${accent}" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M20 142 Q 85 97, 150 142 T 280 142" fill="none" stroke="#fff" stroke-opacity="0.4" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="215" cy="65" r="24" fill="${accent}" fill-opacity="0.3"/>
+                    `;
+                    break;
+                case "lantern":
+                    motifSVG = `
+                        <line x1="150" y1="20" x2="150" y2="52" stroke="${accent}" stroke-width="2"/>
+                        <rect x="118" y="52" width="64" height="86" rx="28" fill="${accent}" fill-opacity="0.3" stroke="${accent}" stroke-width="2.5"/>
+                        <line x1="118" y1="80" x2="182" y2="80" stroke="${accent}" stroke-opacity="0.6" stroke-width="1.5"/>
+                        <line x1="118" y1="110" x2="182" y2="110" stroke="${accent}" stroke-opacity="0.6" stroke-width="1.5"/>
+                        <circle cx="150" cy="95" r="14" fill="#fff" fill-opacity="0.65"/>
+                    `;
+                    break;
+                case "comet":
+                    motifSVG = `
+                        <path d="M60 155 Q 140 115, 225 48" fill="none" stroke="${accent}" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M75 168 Q 150 130, 225 48" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="225" cy="48" r="10" fill="#fff"/>
+                        <circle cx="225" cy="48" r="22" fill="${accent}" fill-opacity="0.35"/>
+                    `;
+                    break;
+                case "ring":
+                    motifSVG = `
+                        <circle cx="150" cy="105" r="48" fill="none" stroke="${accent}" stroke-width="10"/>
+                        <circle cx="150" cy="105" r="48" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="2"/>
+                        <circle cx="150" cy="105" r="68" fill="none" stroke="${accent}" stroke-opacity="0.25" stroke-width="1.5"/>
+                    `;
+                    break;
+                case "prism":
+                    motifSVG = `
+                        <polygon points="150,42 215,155 85,155" fill="${accent}" fill-opacity="0.2" stroke="${accent}" stroke-width="2.5"/>
+                        <polygon points="150,70 192,142 108,142" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="1.5"/>
+                    `;
+                    break;
+                default:
+                    motifSVG = `
+                        <circle cx="150" cy="105" r="52" fill="${accent}" fill-opacity="0.2" stroke="${accent}" stroke-width="2"/>
+                        <polygon points="138,84 176,105 138,126" fill="${accent}" fill-opacity="0.85"/>
+                        <circle cx="150" cy="105" r="72" fill="none" stroke="#fff" stroke-opacity="0.15" stroke-width="1.5" stroke-dasharray="4 6"/>
+                    `;
+            }
+
+            return `
+                <svg viewBox="0 0 300 220" preserveAspectRatio="xMidYMid slice" class="w-full h-full block">
+                    <defs>
+                        <linearGradient id="${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="${c1}" />
+                            <stop offset="100%" stop-color="${c2}" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="300" height="220" fill="url(#${uid})" />
+                    <!-- Decorative subtle grid lines -->
+                    <line x1="0" y1="45" x2="300" y2="45" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+                    <line x1="0" y1="175" x2="300" y2="175" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+                    <line x1="45" y1="0" x2="45" y2="220" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+                    <line x1="255" y1="0" x2="255" y2="220" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+                    ${motifSVG}
+                    <!-- Bottom subtle vignette -->
+                    <rect y="140" width="300" height="80" fill="url(#${uid})" fill-opacity="0.55"/>
+                </svg>
+            `;
+        }
+
+        /**
+         * Render Genre Tabs in Header
+         */
+        function renderGenreTabs() {
+            const container = document.getElementById("genre-tabs");
+            container.innerHTML = GENRES.map(genre => {
+                const isActive = selectedGenre === genre;
+                return `
+                    <button 
+                        onclick="selectGenre('${genre}')"
+                        class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition select-none ${
+                            isActive 
+                            ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' 
+                            : 'bg-slate-800/70 text-slate-300 hover:bg-slate-700/80 hover:text-white border border-slate-700/60'
+                        }"
+                    >
+                        ${genre}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        /**
+         * Select a Genre Tab
+         */
+        function selectGenre(genre) {
+            selectedGenre = genre;
+            renderGenreTabs();
+            renderMovies();
+        }
+
+        /**
+         * Toggle "My Rated Movies" Filter
+         */
+        function toggleMyRated() {
+            showOnlyMyRated = !showOnlyMyRated;
+            const btn = document.getElementById("my-rated-toggle");
+            if (showOnlyMyRated) {
+                btn.classList.remove("bg-slate-800/70", "text-slate-300", "border-slate-700");
+                btn.classList.add("bg-amber-500/20", "text-amber-300", "border-amber-500/50");
+            } else {
+                btn.classList.add("bg-slate-800/70", "text-slate-300", "border-slate-700");
+                btn.classList.remove("bg-amber-500/20", "text-amber-300", "border-amber-500/50");
+            }
+            renderMovies();
+        }
+
+        /**
+         * Update Count Badge on "Миний үнэлсэн" Button
+         */
+        function updateMyRatedBadge() {
+            const count = Object.keys(userRatings).length;
+            document.getElementById("my-rated-count").textContent = count;
+        }
+
+        /**
+         * Handle Sort Dropdown Change
+         */
+        function handleSortChange(value) {
+            sortBy = value;
+            renderMovies();
+        }
+
+        /**
+         * Clear Search Input
+         */
+        function clearSearch() {
+            searchQuery = "";
+            const input = document.getElementById("search-input");
+            input.value = "";
+            document.getElementById("clear-search-btn").classList.add("hidden");
+            renderMovies();
+        }
+
+        /**
+         * Reset All Filters
+         */
+        function resetFilters() {
+            selectedGenre = "Бүгд";
+            searchQuery = "";
+            showOnlyMyRated = false;
+            sortBy = "rating";
+            document.getElementById("search-input").value = "";
+            document.getElementById("clear-search-btn").classList.add("hidden");
+            document.getElementById("sort-select").value = "rating";
+            
+            const btn = document.getElementById("my-rated-toggle");
+            btn.classList.add("bg-slate-800/70", "text-slate-300", "border-slate-700");
+            btn.classList.remove("bg-amber-500/20", "text-amber-300", "border-amber-500/50");
+
+            renderGenreTabs();
+            renderMovies();
+        }
+
+        /**
+         * Rate a Movie (Directly from Card or Inside Modal)
+         */
+        function rateMovie(movieId, stars, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const movie = movies.find(m => m.id === movieId);
+            if (!movie) return;
+
+            const previousRating = userRatings[movieId];
+
+            if (previousRating) {
+                // Update existing user vote without inflating total voteCount
+                movie.ratingSum = movie.ratingSum - previousRating + stars;
+            } else {
+                // First time user is rating this movie
+                movie.ratingSum += stars;
+                movie.voteCount += 1;
+            }
+
+            userRatings[movieId] = stars;
+            saveState();
+            updateMyRatedBadge();
+            renderMovies();
+
+            // If modal is currently open for this movie, sync modal UI too
+            if (activeModalMovieId === movieId) {
+                pendingFormRating = stars;
+                updateModalRatingUI(movie);
+            }
+
+            showToast(`"${movie.title}" кинонд ${stars} од өглөө!`);
+        }
+
+        /**
+         * Render Filtered & Sorted Movies Grid
+         */
+        function renderMovies() {
+            const grid = document.getElementById("movies-grid");
+            const emptyState = document.getElementById("empty-state");
+            const summary = document.getElementById("results-summary");
+
+            // 1. Filter
+            let filtered = movies.filter(movie => {
+                // Genre filter
+                if (selectedGenre !== "Бүгд" && movie.genre !== selectedGenre) {
+                    return false;
+                }
+                // My rated filter
+                if (showOnlyMyRated && !userRatings[movie.id]) {
+                    return false;
+                }
+                // Search filter (Title or Director)
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    const matchTitle = movie.title.toLowerCase().includes(q);
+                    const matchDirector = movie.director.toLowerCase().includes(q);
+                    return matchTitle || matchDirector;
+                }
+                return true;
+            });
+
+            // 2. Sort
+            filtered.sort((a, b) => {
+                if (sortBy === "rating") {
+                    return getAverageRating(b) - getAverageRating(a);
+                } else if (sortBy === "newest") {
+                    return b.year - a.year;
+                } else if (sortBy === "name") {
+                    return a.title.localeCompare(b.title, 'mn');
+                }
+                return 0;
+            });
+
+            // Update summary text
+            if (showOnlyMyRated && filtered.length === 0) {
+                summary.textContent = "Та одоогоор ямар ч кинонд үнэлгээ өгөөгүй байна";
+            } else {
+                summary.textContent = `Нийт ${filtered.length} кино харагдаж байна`;
+            }
+
+            // Show Empty State if 0 results
+            if (filtered.length === 0) {
+                grid.innerHTML = "";
+                grid.classList.add("hidden");
+                emptyState.classList.remove("hidden");
+                emptyState.classList.add("flex");
+                return;
+            }
+
+            emptyState.classList.add("hidden");
+            emptyState.classList.remove("flex");
+            grid.classList.remove("hidden");
+
+            // 3. Render Cards
+            grid.innerHTML = filtered.map(movie => {
+                const avg = getAverageRating(movie).toFixed(1);
+                const myVote = userRatings[movie.id] || 0;
+
+                // Build 5 interactive stars for the card
+                const starsHTML = [1, 2, 3, 4, 5].map(star => {
+                    const isFilled = star <= myVote;
+                    return `
+                        <button 
+                            type="button"
+                            onclick="rateMovie(${movie.id}, ${star}, event)"
+                            title="${star} од өгөх"
+                            aria-label="${star} од өгөх"
+                            class="p-1 rounded-md transition transform hover:scale-125 focus:outline-none ${
+                                isFilled ? 'text-amber-400' : 'text-slate-600 hover:text-amber-300'
+                            }"
+                        >
+                            <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </button>
+                    `;
+                }).join("");
+
+                return `
+                    <article 
+                        onclick="openMovieModal(${movie.id})"
+                        class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/10"
+                    >
+                        <div>
+                            <!-- Poster Container -->
+                            <div class="relative h-44 w-full overflow-hidden bg-slate-800">
+                                <div class="w-full h-full transition-transform duration-500 group-hover:scale-105">
+                                    ${generatePosterSVG(movie)}
+                                </div>
+
+                                <!-- Genre Badge -->
+                                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-950/75 backdrop-blur-md text-slate-200 border border-white/10">
+                                    ${movie.genre}
+                                </span>
+
+                                <!-- Average Rating Pill -->
+                                <div class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md border border-amber-500/30 flex items-center gap-1 shadow-md">
+                                    <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <span class="text-xs font-extrabold text-amber-400">${avg}</span>
+                                    <span class="text-[10px] text-slate-400">(${movie.voteCount})</span>
+                                </div>
+
+                                <!-- Release Year & Country Overlay -->
+                                <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs text-slate-200 font-medium">
+                                    <span class="px-2 py-0.5 rounded bg-black/40 backdrop-blur-sm">${movie.year} он</span>
+                                    ${myVote > 0 ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold">Таных: ${myVote}★</span>` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Card Content -->
+                            <div class="p-4 pb-2">
+                                <h3 class="text-base font-bold text-white group-hover:text-amber-400 transition line-clamp-1 mb-1" title="${movie.title}">
+                                    ${movie.title}
+                                </h3>
+                                <p class="text-xs text-slate-400 mb-2.5 line-clamp-1">
+                                    Найруулагч: <span class="text-slate-300">${movie.director}</span>
+                                </p>
+                                <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                                    ${movie.synopsis}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Quick Star Bar -->
+                        <div class="px-4 py-3 mt-2 border-t border-slate-800/80 bg-slate-900/40 flex items-center justify-between" onclick="event.stopPropagation()">
+                            <span class="text-[11px] font-semibold text-slate-400">Үнэлэх:</span>
+                            <div class="flex items-center">
+                                ${starsHTML}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        /**
+         * Open Movie Detail & Review Modal
+         */
+        function openMovieModal(movieId) {
+            const movie = movies.find(m => m.id === movieId);
+            if (!movie) return;
+
+            activeModalMovieId = movieId;
+            pendingFormRating = userRatings[movieId] || 5;
+
+            // Populate details
+            document.getElementById("modal-poster").innerHTML = generatePosterSVG(movie, true);
+            document.getElementById("modal-genre").textContent = movie.genre;
+            document.getElementById("modal-year").textContent = `${movie.year} он`;
+            document.getElementById("modal-country").textContent = movie.country || "Олон улс";
+            document.getElementById("modal-title").textContent = movie.title;
+            document.getElementById("modal-director").textContent = movie.director;
+            document.getElementById("modal-synopsis").textContent = movie.synopsis;
+
+            updateModalRatingUI(movie);
+            renderModalReviews(movie);
+
+            const modal = document.getElementById("movie-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.body.style.overflow = "hidden";
+        }
+
+        /**
+         * Sync Modal Rating Display & Star Pickers
+         */
+        function updateModalRatingUI(movie) {
+            const avg = getAverageRating(movie).toFixed(1);
+            const myVote = userRatings[movie.id] || 0;
+
+            document.getElementById("modal-avg-rating").textContent = avg;
+            document.getElementById("modal-vote-count").textContent = movie.voteCount;
+            document.getElementById("modal-user-rating-label").textContent = myVote > 0 ? `${myVote} / 5 од` : "Өгөөгүй";
+
+            // Top quick star picker in modal
+            const picker = document.getElementById("modal-star-picker");
+            picker.innerHTML = [1, 2, 3, 4, 5].map(star => {
+                const filled = star <= myVote;
+                return `
+                    <button 
+                        type="button"
+                        onclick="rateMovie(${movie.id}, ${star}, event)"
+                        class="p-1 rounded-lg transition transform hover:scale-110 ${filled ? 'text-amber-400' : 'text-slate-600 hover:text-amber-300'}"
+                        title="${star} од"
+                    >
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </button>
+                `;
+            }).join("");
+
+            // Review form star selector
+            renderFormStarSelector();
+        }
+
+        /**
+         * Render Interactive Star Selector inside Review Form
+         */
+        function renderFormStarSelector() {
+            const container = document.getElementById("form-star-selector");
+            container.innerHTML = [1, 2, 3, 4, 5].map(star => {
+                const filled = star <= pendingFormRating;
+                return `
+                    <button 
+                        type="button"
+                        onclick="setFormRating(${star})"
+                        class="p-0.5 transition transform hover:scale-110 ${filled ? 'text-amber-400' : 'text-slate-600 hover:text-amber-300'}"
+                    >
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function setFormRating(stars) {
+            pendingFormRating = stars;
+            renderFormStarSelector();
+        }
+
+        /**
+         * Render Reviews List in Modal
+         */
+        function renderModalReviews(movie) {
+            const list = document.getElementById("modal-reviews-list");
+            const countBadge = document.getElementById("modal-reviews-count");
+            const reviews = movie.reviews || [];
+
+            countBadge.textContent = reviews.length;
+
+            if (reviews.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">Одоогоор сэтгэгдэл алга байна. Та хамгийн эхний сэтгэгдлийг үлдээгээрэй!</p>`;
+                return;
+            }
+
+            list.innerHTML = reviews.map(rev => {
+                const stars = "★".repeat(rev.rating) + "☆".repeat(5 - rev.rating);
+                return `
+                    <div class="p-3.5 rounded-xl bg-slate-850 border border-slate-800/90">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-600/30 border border-amber-500/40 flex items-center justify-center text-xs font-bold text-amber-300">
+                                    ${escapeHTML(rev.author.charAt(0).toUpperCase())}
+                                </div>
+                                <span class="text-xs font-bold text-slate-200">${escapeHTML(rev.author)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-amber-400 tracking-wider">${stars}</span>
+                                <span class="text-[11px] text-slate-500">${escapeHTML(rev.date)}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed pl-9">${escapeHTML(rev.text)}</p>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        /**
+         * Submit New Review & Update Rating
+         */
+        function submitReview(event) {
+            event.preventDefault();
+            if (!activeModalMovieId) return;
+
+            const movie = movies.find(m => m.id === activeModalMovieId);
+            if (!movie) return;
+
+            const nameInput = document.getElementById("reviewer-name");
+            const commentInput = document.getElementById("review-comment");
+
+            const author = nameInput.value.trim() || "Зочин үзэгч";
+            const text = commentInput.value.trim();
+            if (!text) return;
+
+            // Update star rating for the movie
+            rateMovie(movie.id, pendingFormRating);
+
+            // Add comment to the top of the review list
+            if (!movie.reviews) movie.reviews = [];
+            movie.reviews.unshift({
+                author: author,
+                rating: pendingFormRating,
+                text: text,
+                date: "Дөнгөж сая"
+            });
+
+            saveState();
+            renderModalReviews(movie);
+            commentInput.value = "";
+            showToast("Таны сэтгэгдэл болон үнэлгээ амжилттай нэмэгдлээ!");
+        }
+
+        /**
+         * Close Movie Detail Modal
+         */
+        function closeMovieModal() {
+            const modal = document.getElementById("movie-modal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            activeModalMovieId = null;
+            document.body.style.overflow = "";
+        }
+
+        /**
+         * Open "+ Кино нэмэх" Modal
+         */
+        function openAddMovieModal() {
+            const modal = document.getElementById("add-movie-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            document.body.style.overflow = "hidden";
+        }
+
+        /**
+         * Close "+ Кино нэмэх" Modal
+         */
+        function closeAddMovieModal() {
+            const modal = document.getElementById("add-movie-modal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            document.body.style.overflow = "";
+        }
+
+        /**
+         * Handle Adding a New Movie to the Catalog
+         */
+        function handleAddMovie(event) {
+            event.preventDefault();
+
+            const title = document.getElementById("new-title").value.trim();
+            const director = document.getElementById("new-director").value.trim();
+            const year = parseInt(document.getElementById("new-year").value, 10) || 2024;
+            const genre = document.getElementById("new-genre").value;
+            const initialRating = parseInt(document.getElementById("new-rating").value, 10) || 5;
+            const synopsis = document.getElementById("new-synopsis").value.trim();
+
+            if (!title || !director || !synopsis) return;
+
+            // Pick a random stylish color palette & motif
+            const palettes = [
+                ["#d97706", "#0f172a", "#fbbf24"],
+                ["#2563eb", "#090d16", "#60a5fa"],
+                ["#059669", "#0f172a", "#34d399"],
+                ["#7c3aed", "#1e1b4b", "#c084fc"],
+                ["#e11d48", "#0f172a", "#fb7185"]
+            ];
+            const motifs = ["planet", "prism", "comet", "ring", "wave"];
+            const randomPalette = palettes[Math.floor(Math.random() * palettes.length)];
+            const randomMotif = motifs[Math.floor(Math.random() * motifs.length)];
+
+            const newId = Date.now();
+            const newMovie = {
+                id: newId,
+                title,
+                director,
+                year,
+                genre,
+                country: "Шинээр нэмэгдсэн",
+                ratingSum: initialRating,
+                voteCount: 1,
+                palette: randomPalette,
+                motif: randomMotif,
+                synopsis,
+                reviews: [
+                    {
+                        author: "Нэмсэн хэрэглэгч",
+                        rating: initialRating,
+                        text: "Энэ киног санд шинээр нэмж үнэлгээ өглөө.",
+                        date: "Дөнгөж сая"
+                    }
+                ]
+            };
+
+            movies.unshift(newMovie);
+            userRatings[newId] = initialRating;
+            saveState();
+
+            updateMyRatedBadge();
+            selectedGenre = "Бүгд";
+            renderGenreTabs();
+            renderMovies();
+
+            document.getElementById("add-movie-form").reset();
+            closeAddMovieModal();
+            showToast(`"${title}" кино амжилттай нэмэгдлээ!`);
+        }
+
+        /**
+         * Custom Toast Message Helper (Never uses alert())
+         */
+        function showToast(message) {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = "pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-800 border border-amber-500/40 text-white text-xs sm:text-sm font-semibold shadow-2xl transform transition-all duration-300 translate-y-2 opacity-0";
+            toast.innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                <span>${escapeHTML(message)}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            });
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add("translate-y-2", "opacity-0");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /**
+         * Simple HTML Sanitizer for user inputs
+         */
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Start application on window load
+        window.addEventListener("DOMContentLoaded", initApp);
+    </script>
+</body>
+</html>
